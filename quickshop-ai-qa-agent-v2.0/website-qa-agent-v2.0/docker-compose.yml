@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-qa_agent}
+      POSTGRES_USER: ${DB_USER:-qa}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-qa} -d ${DB_NAME:-qa_agent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: website-qa-agent-v20-sonarqube
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-qa_agent}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-qa}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      SPRING_DATA_REDIS_HOST: redis
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      SOURCE_REPO_PATH: ${SOURCE_REPO_PATH:-}
+      QA_SOURCE_WORKSPACE: /tmp/qa-agent-source
+      SONAR_HOST_URL: ${SONAR_HOST_URL:-http://sonarqube:9000}
+      SONAR_TOKEN: ${SONAR_TOKEN:-squ_ff8f458c0c37781235070d424a11a961181ed9e1}
+      SONAR_PROJECT_KEY: ${SONAR_PROJECT_KEY:-quickshop}
+    volumes:
+      - sourcecache:/tmp/qa-agent-source
+      - ${LOCAL_SOURCE_MOUNT:-./source-readonly}:/workspace/source:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:
+  sourcecache:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:

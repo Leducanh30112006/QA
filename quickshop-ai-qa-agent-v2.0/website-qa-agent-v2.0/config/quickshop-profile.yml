@@ -1,0 +1,29 @@
+project: QuickShop
+baseUrl: https://quickshop.io.vn
+sourceRepository: https://github.com/Leducanh30112006/HN_KS24_CNTT2_OJT.git
+architecture: microservices
+entrypoints:
+  - nginx: [80, 443]
+  - api-gateway: [8080]
+services:
+  identity-service: {port: 8081, checks: [jwt, refresh, revocation, rbac, account-enumeration]}
+  catalog-service: {port: 8082, checks: [product-validation, sku, stock-concurrency, cache-consistency]}
+  order-service: {port: 8083, checks: [cart-ttl, multi-vendor-checkout, saga-compensation, idempotency, dlq]}
+  payment-service: {port: 8084, checks: [vnpay-sandbox-signature, callback-idempotency, escrow, double-entry-ledger]}
+  shipping-service: {port: 8085, checks: [ghn-webhook-signature, ghtk-webhook-signature, idempotency]}
+  notification-ai-service: {port: 8086, checks: [prompt-injection, pii-isolation, output-validation]}
+  frontend: {port: 80, checks: [buyer, seller-center, admin-portal, responsive, accessibility]}
+infrastructure:
+  mysql: 3306
+  redis: 6379
+  rabbitmq: [5672, 15672]
+  minio: [9000, 9001]
+  prometheus: 9090
+  grafana: 3000
+  zipkin: 9411
+policy:
+  defaultMode: passive-read-only
+  destructiveTests: disabled
+  realPayments: disabled
+  loadTests: disabled
+  followOffScopeRedirects: false

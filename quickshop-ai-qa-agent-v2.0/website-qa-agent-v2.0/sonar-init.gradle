@@ -1,0 +1,21 @@
+initscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:5.1.0.4882"
+    }
+}
+
+allprojects {
+    apply plugin: org.sonarqube.gradle.SonarQubePlugin
+    sonarqube {
+        properties {
+            property "sonar.projectName", "QuickShop"
+            property "sonar.projectKey", "quickshop"
+            property "sonar.host.url", "http://localhost:9000"
+            property "sonar.token", "squ_ff8f458c0c37781235070d424a11a961181ed9e1"
+        }
+    }
+}

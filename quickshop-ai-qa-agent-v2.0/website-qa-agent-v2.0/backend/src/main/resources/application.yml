@@ -1,0 +1,33 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: website-qa-agent
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/qa_agent}
+    username: ${SPRING_DATASOURCE_USERNAME:qa}
+    password: ${SPRING_DATASOURCE_PASSWORD:qa}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: 6379
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+qa:
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-2.5-flash}
+  source:
+    workspace: ${QA_SOURCE_WORKSPACE:/tmp/qa-agent-source}
+    local-path: ${SOURCE_REPO_PATH:}
+  sonar:
+    url: ${SONAR_HOST_URL:http://sonarqube:9000}
+    token: ${SONAR_TOKEN:squ_ff8f458c0c37781235070d424a11a961181ed9e1}
+    project-key: ${SONAR_PROJECT_KEY:quickshop}
